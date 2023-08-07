@@ -5,10 +5,12 @@ import pandas as pd
 async def scrape_airbnb():
     async with async_playwright() as pw:
         # Launch new browser
-        browser = await pw.chromium.launch()
+        browser = await pw.chromium.launch(headless=False)
         page = await browser.new_page()
         # Go to Airbnb URL
         await page.goto('https://www.airbnb.com/s/homes', timeout=600000)
+        # Wait for the listings to load
+        await page.wait_for_selector('div.g1qv1ctd.c1v0rf5q.dir.dir-ltr')
         # Extract information
         results = []
         listings = await page.query_selector_all('div.g1qv1ctd.c1v0rf5q.dir.dir-ltr')

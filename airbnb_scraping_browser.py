@@ -1,5 +1,6 @@
 import asyncio
 from playwright.async_api import async_playwright
+from bs4 import BeautifulSoup
 import pandas as pd
 
 username='YOUR_BRIGHTDATA_USERNAME'
@@ -18,29 +19,33 @@ async def scrape_airbnb():
         # Go to Airbnb URL
         await page.goto('https://www.airbnb.com/s/homes', timeout=120000)
         print('done, evaluating')
+        # Get the entire HTML content
+        html_content = await page.evaluate('()=>document.documentElement.outerHTML')
+
+        # Parse the HTML with Beautiful Soup
+        soup = BeautifulSoup(html_content, 'html.parser')
+
         # Extract information
         results = []
-        listings = await page.query_selector_all('div.g1qv1ctd.c1v0rf5q.dir.dir-ltr')
+        listings = soup.select('div.g1qv1ctd.c1v0rf5q.dir.dir-ltr')
         for listing in listings:
             result = {}
             # Property name
-            name_element = await listing.query_selector('div[data-testid="listing-card-title"]')
-            if name_element:
-                result['property_name'] = await page.evaluate("(el) => el.textContent", name_element)
-            else:
-                result['property_name'] = 'N/A'
+            name_element = listing.select_one('div[data-testid="listing-card-title"]')
+            result['property_name'] = name_element.text if name_element else 'N/A'
             # Location
-            location_element = await listing.query_selector('div[data-testid="listing-card-subtitle"]')
-            result['location'] = await location_element.inner_text() if location_element else 'N/A'
+            location_element = listing.select_one('div[data-testid="listing-card-subtitle"]')
+            result['location'] = location_element.text if location_element else 'N/A'
             # Price
-            price_element = await listing.query_selector('div._1jo4hgw')
-            result['price'] = await price_element.inner_text() if price_element else 'N/A'
+            price_element = listing.select_one('div._1jo4hgw')
+            result['price'] = price_element.text if price_element else 'N/A'
             results.append(result)
-        
+
         # Close browser
         await browser.close()
         
         return results
+
 # Run the scraper and save results to a CSV file
 results = asyncio.run(scrape_airbnb())
 df = pd.DataFrame(results)
