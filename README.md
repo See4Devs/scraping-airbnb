@@ -17,6 +17,7 @@ playwright install
 python3 airbnb_scraper.py
 python3 airbnb_scraping_browser.py
 python3 airbnb_scraping_proxy.py
+python3 airbnb_scraping_single_listing.py
 ```
 
 Replace the credentials with your brightdata's account 
